@@ -1,0 +1,6 @@
+__pycache__/
+prod/postgres_data/
+other/listener/build/
+other/listener/dist/
+nohup.out
+*.log
