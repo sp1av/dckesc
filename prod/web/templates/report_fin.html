@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Security Scan Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/report_fin.css') }}">
+</head>
+<body>
+
+    <h1>Docker Security Scan Report</h1>
+
+    {% for docker in results %}
+        <div class="report-container">
+            <h2>
+                {% if multiple_containers %}
+                    Report {{ docker.docker_id }}
+                {% else %}
+                    Report
+                {% endif %}
+            </h2>
+
+            {% if docker.vulnerabilities %}
+              {% set vulnerabilities = docker.vulnerabilities %}
+
+              {% if vulnerabilities.docker_socket %}
+                  <h3>Docker Socket:</h3>
+                  <p>Status: {{ vulnerabilities.docker_socket.status }}</p>
+                  <p>Details: {{ vulnerabilities.docker_socket.details }}</p>
+              {% endif %}
+
+              {% if vulnerabilities.privileged_mode %}
+                  <h3>Privileged Mode:</h3>
+                  <p>Status: {{ vulnerabilities.privileged_mode.status }}</p>
+                  <p>Details: {{ vulnerabilities.privileged_mode.details }}</p>
+              {% endif %}
+
+              {% if vulnerabilities.bad_capabilities %}
+                  <h3>Bad Capabilities:</h3>
+                  <p>Status: {{ vulnerabilities.bad_capabilities.status }}</p>
+                  <ul>
+                      {% for capability in vulnerabilities.bad_capabilities.details %}
+                          <li>{{ capability }}</li>
+                      {% endfor %}
+                  </ul>
+              {% endif %}
+
+              {% if vulnerabilities.docker_group %}
+                  <h3>Docker Group:</h3>
+                  <p>Status: {{ vulnerabilities.docker_group.status }}</p>
+                  <p>Details: {{ vulnerabilities.docker_group.details }}</p>
+              {% endif %}
+            {% else %}
+              <p>No vulnerabilities found. The container is secure.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+</body>
+</html>

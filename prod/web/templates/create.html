@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Scan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/create.css') }}">
+</head>
+<body>
+    <h1>CHOOSE MODE</h1>
+    <a href="#" class="offensive-btn" onclick="showForm('offensive')">Offensive</a>
+    <a href="#" class="defensive-btn" onclick="showForm('defensive')">Defensive</a>
+
+    <form id="offensive-form" style="display:none;" onsubmit="submitForm(event, '/api/create/offensive')">
+        <h2>Offensive Scan</h2>
+        <input type="text" id="offensive-name" placeholder="Scan Name" required>
+        <button type="submit">Create</button>
+    </form>
+
+    <form id="defensive-form" style="display:none;" onsubmit="submitForm(event, '/api/create/defensive')">
+        <h2>Defensive Scan</h2>
+        <input type="text" id="defensive-name" placeholder="Scan Name" required>
+        <select id="scan-type" onchange="toggleSchedule()">
+            <option value="one-time">One-Time</option>
+            <option value="recurring">Recurring</option>
+        </select>
+
+        <div id="container-list">
+            <div class="container-id-group">
+                <input type="text" placeholder="Container ID" required>
+                <button type="button" class="remove-btn" onclick="removeContainer(this)">-</button>
+            </div>
+        </div>
+
+        <button type="button" id="add-container-id" onclick="addContainer()">+</button>
+        <button type="submit">Create</button>
+    </form>
+
+    <script src="{{ url_for('static', filename='js/create.js') }}"></script>
+</body>
+</html>
