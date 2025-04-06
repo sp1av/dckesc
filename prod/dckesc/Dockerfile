@@ -4,15 +4,20 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     openssh-server \
-    libcap2-bin
+    libcap2-bin \
+    curl
 
 
 RUN pip install flask \
 	flask_sqlalchemy \
 	requests \
 	pwntools \
-	psycopg2-binary --break-system-packages
+	psycopg2-binary --break-system-packages \
+	gunicorn
 
+
+RUN curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.61.0/trivy_0.61.0_Linux-64bit.deb -o /tmp/trivy.deb
+RUN dpkg -i /tmp/trivy.deb
 
 RUN useradd -m -s /bin/bash stuff
 
@@ -40,3 +45,4 @@ WORKDIR /dckesc
 COPY . .
 
 CMD ["python3", "/dckesc/dckesc.py"]
+#CMD ["gunicorn", "--bind", "0.0.0.0:1703", "dckesc:app"]

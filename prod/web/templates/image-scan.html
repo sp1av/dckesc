@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Result - {{ data.ArtifactName }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/image-scan.css') }}">
+</head>
+<body>
+    <h1>Scan Result - {{ data.ArtifactName }}</h1>
+
+    <h2 class="section-title">Vulnerabilities</h2>
+    <div class="container-wrapper">
+        <div class="container">
+            <ul class="vulnerability-list">
+                {% for result in data.Results %}
+                    {% if result.Vulnerabilities %}
+                        {% for vuln in result.Vulnerabilities %}
+                            <li>
+                                <h3>{{ vuln.Title or "No title provided" }}</h3>
+
+                                {% if vuln.VulnerabilityID %}
+                                    <p><strong class="section-title">CVE:</strong>
+                                        <a href="{{ vuln.PrimaryURL or '#' }}" target="_blank">{{ vuln.VulnerabilityID }}</a>
+                                    </p>
+                                {% endif %}
+
+                                <p><strong class="section-title">Severity:</strong>
+                                    <span class="severity severity-{{ vuln.Severity | lower }}">
+                                        {{ vuln.Severity or "Unknown" }}
+                                    </span>
+                                </p>
+
+                                {% if vuln.CVSS is defined and vuln.CVSS.nvd is defined and vuln.CVSS.nvd.V3Score is defined %}
+                                    <p><strong class="section-title">CVSS v3.1 Score:</strong>
+                                        <span class="cvss-score">{{ vuln.CVSS.nvd.V3Score }}</span>
+                                    </p>
+                                {% else %}
+                                    <p><strong class="section-title">CVSS v3.1 Score:</strong>
+                                        <em>Not available</em>
+                                    </p>
+                                {% endif %}
+
+                                {% if vuln.Description %}
+                                    <p><strong class="section-title">Description:</strong> {{ vuln.Description }}</p>
+                                {% endif %}
+
+                                {% if vuln.PkgName %}
+                                    <p><strong class="section-title">Package:</strong>
+                                        {{ vuln.PkgName }}
+                                        {% if vuln.InstalledVersion %}(Version: {{ vuln.InstalledVersion }}){% endif %}
+                                    </p>
+                                {% endif %}
+
+                                {% if vuln.References %}
+                                    <div class="reference-links">
+                                        <strong class="section-title">References:</strong><br>
+                                        {% for reference in vuln.References %}
+                                            <a href="{{ reference }}" class="link-text" target="_blank">Link</a><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li><em>No vulnerabilities found in {{ result.Target }}</em></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

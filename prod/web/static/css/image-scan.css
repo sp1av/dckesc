@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+    background-color: black;
+    color: #00ff00;
+    font-family: 'Press Start 2P', cursive;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2 {
+    color: #00ff00;
+    margin-bottom: 20px;
+}
+
+a {
+    color: #00ff00;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #00cc00;
+}
+
+.container-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    max-width: 1400px;
+    margin: auto;
+    padding: 20px;
+}
+
+.container {
+    width: 100%; /* делаем блок на всю ширину страницы */
+    padding: 30px;
+    border: 2px solid #00ff00;
+    text-align: left;
+}
+
+ul, ol {
+    text-align: left;
+    line-height: 1.6;
+}
+
+.vulnerability-list li {
+    margin-bottom: 15px;
+    background-color: #111;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.severity {
+    font-weight: bold;
+    color: #e74c3c; /* красный для серьезных уязвимостей */
+}
+
+.cvss-score {
+    font-weight: bold;
+    color: #2980b9; /* синий для CVSS */
+}
+
+.reference-links a {
+    color: #00ff00;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.reference-links a:hover {
+    color: #00cc00;
+}
+
+.section-title {
+    color: #ff5733; /* Оранжевый цвет для разделов */
+    font-size: 1.2em;
+    margin-top: 20px;
+}
+
+.link-text {
+    color: #ff5733; /* оранжевый для текста ссылок */
+    text-decoration: underline;
+}
+
+.link-text:hover {
+    color: #ff9966; /* светлый оранжевый при наведении */
+}

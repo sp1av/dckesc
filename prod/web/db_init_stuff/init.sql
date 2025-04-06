@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT INTO users (username, password, role)
-VALUES ('1', '$2b$12$N96t1BlxZh6IeVVESNxnOufiidNnLCTejxhMyvltsmgOLfLOmCDv6', 'admin')
+VALUES ('splav', '$2b$12$bYLZnYdH.vXr/jeRt38jU.s3uDu3oBqL9rOrhRcQXFuplRpPE0Yby', 'admin')
 ON CONFLICT (username) DO NOTHING;

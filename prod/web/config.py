@@ -1,9 +1,11 @@
-import uuid
+import uuid, os
 
 class Config:
+    user = os.getenv("DB_USERNAME")
+    password = os.getenv("DB_PASSWORD")
     SQLALCHEMY_BINDS = {
-        'dckesc': 'postgresql://xk3TbFu0ZC7HMfpZ4Bnjv8UXgJP:DMKO6a76mNYj0LHYukfbWMvn0qR@postgres:5432/dckesc',
-        'web': "postgresql://xk3TbFu0ZC7HMfpZ4Bnjv8UXgJP:DMKO6a76mNYj0LHYukfbWMvn0qR@postgres:5432/web"
+        'dckesc': f"postgresql://{user}:{password}@postgres:5432/dckesc",
+        'web': f"postgresql://{user}:{password}@postgres:5432/web"
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = str(uuid.uuid4())

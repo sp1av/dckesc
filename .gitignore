@@ -4,3 +4,6 @@ other/listener/build/
 other/listener/dist/
 nohup.out
 *.log
+.env
+htpasswd
+registry_data/

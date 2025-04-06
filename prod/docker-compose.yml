@@ -14,6 +14,8 @@ services:
       READY: 1
       PYTHONUNBUFFERED: 1
       FLASK_ENV: production
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
     healthcheck:
       test: [ "CMD-SHELL", "echo $READY" ]
       interval: 5s
@@ -23,6 +25,9 @@ services:
   dckesc:
     build: ./dckesc
     container_name: dckesc_container
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "12936:22"
     depends_on:
@@ -36,10 +41,36 @@ services:
     image: postgres:latest
     container_name: my_postgres
     environment:
-      POSTGRES_USER: xk3TbFu0ZC7HMfpZ4Bnjv8UXgJP
-      POSTGRES_PASSWORD: DMKO6a76mNYj0LHYukfbWMvn0qR
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+
+  trivy:
+    image: aquasec/trivy
+    command: [ "server", "--listen", "0.0.0.0:8080", "--token", "secret" ]
+    networks:
+      - backend
+    environment:
+      TRIVY_INSECURE: "true"
+
+
+  registry:
+    image: registry:2
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./registry_data:/var/lib/registry
+      - ./auth:/auth
+    environment:
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
+      REGISTRY_AUTH: "htpasswd"
+      REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
+      REGISTRY_AUTH_HTPASSWD_PATH: "/auth/htpasswd"
     networks:
       - backend
 
