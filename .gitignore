@@ -8,3 +8,4 @@ nohup.out
 htpasswd
 registry_data/
 .idea
+prod/web/tmp/
