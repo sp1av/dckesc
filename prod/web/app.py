@@ -462,19 +462,15 @@ def scan_detail(scan_id):
             
             for docker in results:
                 if docker.vulnerabilities:
-                    try:
-                        # Convert string to dict if it's a string
-                        if isinstance(docker.vulnerabilities, str):
-                            vulnerabilities = docker.vulnerabilities.replace("'", '"').strip()
-                            vulnerabilities = vulnerabilities.replace("True", 'true')
-                            docker.vulnerabilities = json.loads(vulnerabilities)
-                    except json.JSONDecodeError as e:
-                        docker.vulnerabilities = {"error": "Failed to parse vulnerability data"}
+                    # Convert string to dict if it's a string
+                    if isinstance(docker.vulnerabilities, str):
+                        vulnerabilities = docker.vulnerabilities.replace("'", '"').strip()
+                        vulnerabilities = vulnerabilities.replace("True", 'true')
+                        docker.vulnerabilities = json.loads(vulnerabilities)
                         
             return render_template('report_fin.html', results=results, multiple_containers=multiple_containers)
             
         except Exception as e:
-            app.logger.error(f"Error processing scan data for scan {scan_id}: {str(e)}")
             return "Error processing scan data", 500
             
     except Exception as e:
