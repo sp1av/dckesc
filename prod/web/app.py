@@ -17,9 +17,9 @@ from flask_login import current_user
 from flask import send_from_directory
 import requests
 from sqlalchemy.dialects.postgresql import JSONB
-HOST = "192.168.0.164"
-
+from config import HOST
 from config import Config
+import sys
 
 app = Flask(__name__)
 
@@ -186,27 +186,35 @@ def view_scans():
 @app.route('/api/ready', methods=['POST'])
 def api_ready():
     if request.method == "POST":
-        uuid = str(request.form['uuid'])
-        id = str(request.form['scan_id'])
-        if not uuid or not id:
-            return  "Bad request", 400
         try:
+            uuid = str(request.form.get('uuid', ''))
+            id = str(request.form.get('scan_id', ''))
+            
+            if not uuid or not id:
+                return "Missing required parameters", 400
+                
             test_1 = Scans.query.filter_by(id=int(id)).first()
             test_2 = Scans.query.filter_by(uuid=uuid).first()
             if not test_1 or not test_2:
-                return "Error"
+                return "Invalid scan ID or UUID", 404
+                
             data = {
                 "scan_uuid": uuid,
                 "scan_id": id
             }
-            alarm = requests.Session()
-            alarm.post("http://dckesc:2517/api/start", data=data)
-            return "Scanning start."
+            
+            try:
+                alarm = requests.Session()
+                response = alarm.post("http://dckesc:2517/api/start", data=data)
+                response.raise_for_status()
+                return "Scanning started", 200
+            except:
+                return "Failed to start scanning service", 500
+                    
         except Exception as e:
-            print(str(e))
-            return "We have some troubles("
+            return "Internal server error", 500
     else:
-        return "Bad method", 405
+        return "Method not allowed", 405
 
 
 @app.route('/static/bin/<file>')
@@ -371,21 +379,31 @@ def create_scan():
 @login_required
 def inspect(docker_id):
     if request.method == 'POST':
-        uuid = request.form['uuid']
-        scan_id = request.form['scan_id']
-        data = json.loads(request.form["data"])
-        print(data)
-        if Scans.query.filter_by(id=scan_id, uuid=uuid).first():
+        try:
+            uuid = request.form.get('uuid')
+            scan_id = request.form.get('scan_id')
+            data_str = request.form.get("data")
+            
+            if not all([uuid, scan_id, data_str]):
+                return "Missing required parameters", 400
+                
+            data = json.loads(data_str)
+            scan = Scans.query.filter_by(id=scan_id, uuid=uuid).first()
+            if not scan:
+                return "Scan not found", 404
+                
             docker = Docker.query.filter_by(scan_id=scan_id, docker_id=docker_id).first()
-            if docker:
-                docker.inspect = data
-                db.session.commit()
-                return "Updated successfully", 200
-            else:
+            if not docker:
                 return "Docker entry not found", 404
-
+            
+            docker.inspect = data
+            db.session.commit()
+            return "Updated successfully", 200
+  
+        except:
+            return "Internal server error", 500
     else:
-        return "Not allowed", 405
+        return "Method not allowed", 405
 
 
 
@@ -403,7 +421,7 @@ def proceed_image():
         }
         requests.post("http://dckesc:2517/scan/image", data=data)
     else:
-        return "Not allowed", 405
+        return "Method not allowed", 405
 
 
 #@app.route('/scan/<scan_id>/<docker_id>')
@@ -431,31 +449,36 @@ def proceed_image():
 @login_required
 def scan_detail(scan_id):
     try:
-        if AvailableScans.query.filter_by(available_scan=scan_id, username=current_user.username).first():
-            try:
-                results = Docker.query.filter_by(scan_id=scan_id).all()
-
-                if not results:
-                    return "No reports found for this scan", 404
-
-                multiple_containers = len(results) > 1
-
-                for docker in results:
+        # Check if user has access to this scan
+        if not AvailableScans.query.filter_by(available_scan=scan_id, username=current_user.username).first():
+            return "Access denied", 403
+            
+        try:
+            results = Docker.query.filter_by(scan_id=scan_id).all()
+            if not results:
+                return "No reports found for this scan", 404
+                
+            multiple_containers = len(results) > 1
+            
+            for docker in results:
+                if docker.vulnerabilities:
                     try:
-                        docker.vulnerabilities = docker.vulnerabilities.replace("'", '"').strip()
-                        docker.vulnerabilities = docker.vulnerabilities.replace("True", 'true')
-                        docker.vulnerabilities = json.loads(docker.vulnerabilities)
-                    except:
-                        docker.vulnerabilities = docker.vulnerabilities
-
-                return render_template('report_fin.html', results=results, multiple_containers=multiple_containers)
-
-            except Exception as e:
-                return f"Error processing scan data: {e}", 500
-        else:
-            return "Restricted", 403
+                        # Convert string to dict if it's a string
+                        if isinstance(docker.vulnerabilities, str):
+                            vulnerabilities = docker.vulnerabilities.replace("'", '"').strip()
+                            vulnerabilities = vulnerabilities.replace("True", 'true')
+                            docker.vulnerabilities = json.loads(vulnerabilities)
+                    except json.JSONDecodeError as e:
+                        docker.vulnerabilities = {"error": "Failed to parse vulnerability data"}
+                        
+            return render_template('report_fin.html', results=results, multiple_containers=multiple_containers)
+            
+        except Exception as e:
+            app.logger.error(f"Error processing scan data for scan {scan_id}: {str(e)}")
+            return "Error processing scan data", 500
+            
     except Exception as e:
-        return f"Internal error: {e}", 500
+        return "Internal server error", 500
 
 
 if __name__ == '__main__':
