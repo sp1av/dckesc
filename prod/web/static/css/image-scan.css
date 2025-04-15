@@ -34,7 +34,7 @@ a:hover {
 }
 
 .container {
-    width: 100%; /* делаем блок на всю ширину страницы */
+    width: 100%;
     padding: 30px;
     border: 2px solid #00ff00;
     text-align: left;
@@ -54,12 +54,12 @@ ul, ol {
 
 .severity {
     font-weight: bold;
-    color: #e74c3c; /* красный для серьезных уязвимостей */
+    color: #e74c3c;
 }
 
 .cvss-score {
     font-weight: bold;
-    color: #2980b9; /* синий для CVSS */
+    color: #2980b9;
 }
 
 .reference-links a {
@@ -73,16 +73,16 @@ ul, ol {
 }
 
 .section-title {
-    color: #ff5733; /* Оранжевый цвет для разделов */
+    color: #ff5733;
     font-size: 1.2em;
     margin-top: 20px;
 }
 
 .link-text {
-    color: #ff5733; /* оранжевый для текста ссылок */
+    color: #ff5733;
     text-decoration: underline;
 }
 
 .link-text:hover {
-    color: #ff9966; /* светлый оранжевый при наведении */
+    color: #ff9966;
 }

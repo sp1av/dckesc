@@ -61,6 +61,17 @@ class Scans(db.Model):
     state = db.Column(db.String(20), nullable=False) # pending/ongoing/finished
     password = db.Column(db.String(40), nullable=False, unique=True)
 
+
+class ImageScans(db.Model):
+    __bind_key__ = 'dckesc'
+
+    id = db.Column(db.Integer, primary_key=True) #scan id
+    uuid = db.Column(db.String(40), nullable=False, unique=True) # uuid.uuid4() - len=38 - for registry
+    image_name = db.Column(db.String(20), nullable=False, unique=True) # image name
+    registry = db.Column(db.String(20), nullable=False, unique=True)  # image name
+    report = db.Column(JSONB) # full image report
+
+
 class Docker(db.Model):
     __bind_key__ = 'dckesc'
 
@@ -357,6 +368,7 @@ def create_scan():
 
 
 @app.route('/send_data/<docker_id>', methods=["POST"])
+@login_required
 def inspect(docker_id):
     if request.method == 'POST':
         uuid = request.form['uuid']
@@ -372,6 +384,24 @@ def inspect(docker_id):
             else:
                 return "Docker entry not found", 404
 
+    else:
+        return "Not allowed", 405
+
+
+
+@app.route('/api/scan/image', methods=["POST"])
+@login_required
+def proceed_image():
+    if request.method == "POST":
+        image = request.form.get("image")
+        registry = request.form.get("registry")
+        uuid = request.form.get("uuid")
+        data = {
+            "image": image,
+            "registry": registry,
+            "uuid": uuid
+        }
+        requests.post("http://dckesc:2517/scan/image", data=data)
     else:
         return "Not allowed", 405
 

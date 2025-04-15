@@ -50,7 +50,7 @@ services:
 
 
   trivy:
-    image: aquasec/trivy
+    image: aquasec/trivy:latest
     command: [ "server", "--listen", "0.0.0.0:8080", "--token", "secret" ]
     networks:
       - backend

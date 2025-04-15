@@ -48,6 +48,16 @@ class Scans(db.Model):
     password = db.Column(db.String(40), nullable=False, unique=True)
 
 
+class ImageScans(db.Model):
+    __bind_key__ = 'dckesc'
+
+    id = db.Column(db.Integer, primary_key=True) #scan id
+    uuid = db.Column(db.String(40), nullable=False, unique=True) # uuid.uuid4() - len=38 - for registry
+    image_name = db.Column(db.String(20), nullable=False, unique=True) # image name
+    registry = db.Column(db.String(20), nullable=False, unique=True)  # image name
+    report = db.Column(JSONB) # full image report
+
+
 class Ports(db.Model):
     __bind_key__ = 'dckesc'
 
@@ -205,6 +215,48 @@ def start():
 
     return "Scanning started"
 
+
+@app.route("/image/scan", nethods=["POST"])
+def image_scan():
+    def clean_json(data):
+        keep_keys = [
+            "VulnerabilityID",
+            "PkgID",
+            "PkgName",
+            "PkgIdentifier",
+            "InstalledVersion",
+            "Severity",
+            "Description",
+            "PrimaryURL",
+            "References",
+            "CVSS"
+        ]
+
+        for result in data["Results"]:
+            for vulnerability in result["Vulnerabilities"]:
+                vulnerability_keys = {key: value for key, value in vulnerability.items() if key in keep_keys}
+
+                if "CVSS" in vulnerability_keys:
+                    cvss_data = vulnerability_keys["CVSS"]
+
+                    if "nvd" in cvss_data:
+                        vulnerability_keys["CVSS"] = {
+                            "nvd": {
+                                "V3Score": cvss_data["nvd"].get("V3Score")
+                            }
+                        }
+                vulnerability.update(vulnerability_keys)
+        return data
+    if request.method == "POST":
+        image = request.form.get("image")
+        registry = request.form.get("registry")
+        uuid = request.form.get("uuid")
+
+    else:
+        return "Not allowed", 405
+
+
+    pass
 
 
 if __name__ == '__main__':
