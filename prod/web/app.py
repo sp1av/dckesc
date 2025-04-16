@@ -17,11 +17,12 @@ from flask_login import current_user
 from flask import send_from_directory
 import requests
 from sqlalchemy.dialects.postgresql import JSONB
-from config import HOST
 from config import Config
+from config import Variables
 import sys
 
 app = Flask(__name__)
+HOST = Variables.HOST
 
 app.config.from_object(Config)
 
@@ -376,7 +377,6 @@ def create_scan():
 
 
 @app.route('/send_data/<docker_id>', methods=["POST"])
-@login_required
 def inspect(docker_id):
     if request.method == 'POST':
         try:
@@ -471,9 +471,11 @@ def scan_detail(scan_id):
             return render_template('report_fin.html', results=results, multiple_containers=multiple_containers)
             
         except Exception as e:
+            print(e)
             return "Error processing scan data", 500
             
     except Exception as e:
+        print(e)
         return "Internal server error", 500
 
 

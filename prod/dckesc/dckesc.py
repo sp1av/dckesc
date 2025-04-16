@@ -6,9 +6,11 @@ import requests
 from sqlalchemy import nullsfirst
 import multiprocessing
 import threading
+import concurrent.futures
 import importlib
 import json
 import pwn
+import time
 from sqlalchemy.dialects.postgresql import JSONB
 
 from config import Config
@@ -145,6 +147,8 @@ def proceed_target(data, mode, scan_id):
         thread.start()
         threads.append(thread)
 
+    time.sleep(300)
+
     for thread in threads:
         thread.join()
 
@@ -216,7 +220,7 @@ def start():
     return "Scanning started"
 
 
-@app.route("/image/scan", nethods=["POST"])
+@app.route("/image/scan", methods=["POST"])
 def image_scan():
     def clean_json(data):
         keep_keys = [
