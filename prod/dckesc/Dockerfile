@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     libcap2-bin \
     curl
 
+# Create web-app user and group with home directory
+RUN groupadd -r web-app && useradd -r -g web-app -s /bin/bash -m -d /home/web-app web-app
 
 RUN pip install flask \
 	flask_sqlalchemy \
@@ -37,12 +39,19 @@ RUN echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPiaaaVgDOdLEOiCNmNRkf2NR0VftRWRtC
     chmod 600 /home/stuff/.ssh/authorized_keys; \
     chmod 700 /home/stuff/.ssh
 
-
 USER root
-
 
 WORKDIR /dckesc
 COPY . .
+
+RUN chown -R web-app:web-app /dckesc && \
+    chmod 755 /dckesc && \
+    chown -R web-app:web-app /home/web-app && \
+    chmod 700 /home/web-app
+
+RUN service ssh start
+
+USER web-app
 
 CMD ["python3", "/dckesc/dckesc.py"]
 #CMD ["gunicorn", "--bind", "0.0.0.0:1703", "dckesc:app"]

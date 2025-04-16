@@ -5,7 +5,7 @@ import io
 import uuid
 import socket
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
@@ -20,6 +20,11 @@ from sqlalchemy.dialects.postgresql import JSONB
 from config import Config
 from config import Variables
 import sys
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
 app = Flask(__name__)
 HOST = Variables.HOST
@@ -68,10 +73,11 @@ class ImageScans(db.Model):
 
     id = db.Column(db.Integer, primary_key=True) #scan id
     uuid = db.Column(db.String(40), nullable=False, unique=True) # uuid.uuid4() - len=38 - for registry
-    image_name = db.Column(db.String(20), nullable=False, unique=True) # image name
-    registry = db.Column(db.String(20), nullable=False, unique=True)  # image name
-    report = db.Column(JSONB) # full image report
-
+    image_name = db.Column(db.String(20), nullable=False) # image name
+    registry = db.Column(db.String(20), nullable=False)  # image registry
+    scan_date = db.Column(db.DateTime, default=datetime.utcnow)
+    scan_data = db.Column(db.JSON) # 
+    username = db.Column(db.String(100), nullable=False)
 
 class Docker(db.Model):
     __bind_key__ = 'dckesc'
@@ -477,6 +483,116 @@ def scan_detail(scan_id):
     except Exception as e:
         print(e)
         return "Internal server error", 500
+
+
+@app.route('/scan/<int:scan_id>/pdf')
+@login_required
+def generate_pdf_report(scan_id):
+    try:
+        if not AvailableScans.query.filter_by(available_scan=scan_id, username=current_user.username).first():
+            return "Access denied", 403
+            
+        results = Docker.query.filter_by(scan_id=scan_id).all()
+        if not results:
+            return "No reports found for this scan", 404
+            
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        styles = getSampleStyleSheet()
+        story = []
+        
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            spaceAfter=30,
+            alignment=1
+        )
+        story.append(Paragraph("Docker Security Scan Report", title_style))
+        
+        scan = Scans.query.filter_by(id=scan_id).first()
+        scan_info = [
+            ["Scan ID:", str(scan_id)],
+            ["Scan Name:", scan.name],
+            ["Scan Mode:", scan.mode],
+            ["Scan Author:", current_user.username],
+            ["Scan Date:", scan.date],
+            ["Report Generated:", datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+        ]
+        
+        scan_table = Table(scan_info, colWidths=[2*inch, 4*inch])
+        scan_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(scan_table)
+        story.append(Spacer(1, 20))
+        
+        for docker in results:
+            story.append(Paragraph(f"Container {docker.docker_id}", styles['Heading2']))
+            
+            if docker.vulnerabilities:
+                if isinstance(docker.vulnerabilities, str):
+                    vulnerabilities = docker.vulnerabilities.replace("'", '"').strip()
+                    vulnerabilities = vulnerabilities.replace("True", 'true')
+                    vulnerabilities = json.loads(vulnerabilities)
+                else:
+                    vulnerabilities = docker.vulnerabilities
+                    
+                for vuln_key, vuln_data in vulnerabilities.items():
+                    story.append(Paragraph(f"{vuln_data.get('name', vuln_key)}:", styles['Heading3']))
+                    story.append(Paragraph(f"Status: {vuln_data.get('status', 'Unknown')}", styles['Normal']))
+                    
+                    if 'details' in vuln_data:
+                        if isinstance(vuln_data['details'], list):
+                            for detail in vuln_data['details']:
+                                story.append(Paragraph(f"• {detail}", styles['Normal']))
+                        else:
+                            story.append(Paragraph(f"Details: {vuln_data['details']}", styles['Normal']))
+                    story.append(Spacer(1, 10))
+            else:
+                story.append(Paragraph("No vulnerabilities found. The container is secure.", styles['Normal']))
+            story.append(Spacer(1, 20))
+            
+        doc.build(story)
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"scan_report_{scan_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        return "Error generating PDF report", 500
+
+
+@app.route('/image-scan/view/<int:scan_id>', methods=["GET"])
+@login_required
+def view_image_scan(scan_id):
+    if request.method == "GET":
+        try:
+            scan = ImageScans.query.filter_by(id=scan_id, username=current_user.username).first()
+            if not scan:
+                return "Scan not found", 404
+
+            return render_template('image-scan.html', data=scan.scan_data)
+
+        except Exception as e:
+            return "Internal server error", 500
+    else:
+        return "Method not allowed", 405
 
 
 if __name__ == '__main__':

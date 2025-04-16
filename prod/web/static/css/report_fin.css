@@ -8,6 +8,29 @@ body {
     padding: 20px;
 }
 
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 0 20px;
+}
+
+.download-button {
+    background-color: #00ff00;
+    color: black;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+.download-button:hover {
+    background-color: #00cc00;
+    box-shadow: 0 0 10px #00ff00;
+}
+
 .report-container {
     width: 80%;
     margin: 20px auto;
@@ -21,6 +44,7 @@ body {
 h1 {
     color: #00ff00;
     text-shadow: 0 0 10px #00ff00;
+    margin: 0;
 }
 
 h2 {

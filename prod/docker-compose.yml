@@ -26,8 +26,10 @@ services:
     build: ./dckesc
     container_name: dckesc_container
     environment:
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REGISTRY_USERNAME=${REGISTRY_USERNAME}
+      - REGISTRY_PASSWORD=${REGISTRY_PASSWORD}
     ports:
       - "12936:22"
     depends_on:
@@ -35,7 +37,6 @@ services:
         condition: service_healthy
     networks:
       - backend
-
 
   postgres:
     image: postgres:latest
@@ -47,16 +48,6 @@ services:
       - ./postgres_data:/var/lib/postgresql/data
     networks:
       - backend
-
-
-  trivy:
-    image: aquasec/trivy:latest
-    command: [ "server", "--listen", "0.0.0.0:8080", "--token", "secret" ]
-    networks:
-      - backend
-    environment:
-      TRIVY_INSECURE: "true"
-
 
   registry:
     image: registry:2
@@ -73,7 +64,6 @@ services:
       REGISTRY_AUTH_HTPASSWD_PATH: "/auth/htpasswd"
     networks:
       - backend
-
 
 networks:
   backend:

@@ -36,8 +36,9 @@ def main(data):
         docker_socket_path = docker_socket_path[docker_socket_path.find('/'):]
         if "docker.sock" in docker_socket_path:
             output["docker_socket"] = {
+                "name": "Docker Socket",
                 "status": True,
-                "details": docker_socket_path
+                "details": [docker_socket_path]
             }
 
     # PRIVILEGED CHECK
@@ -45,8 +46,9 @@ def main(data):
     privileged_check = exec("grep 'CapEff' /proc/self/status | grep 'ffffffff'")
     if "ffffffff" in privileged_check.strip():
         output["privileged_mode"] = {
+            "name": "Privileged Mode",
             "status": True,
-            "details": "Container is running in privileged mode (has full root capabilities)."
+            "details": ["Container is running in privileged mode (has full root capabilities)."]    
         }
 
     # Docker group check
@@ -54,8 +56,9 @@ def main(data):
     group_check = exec("id -Gn | grep -w docker")
     if "docker" in group_check:
         output["docker_group"] = {
+            "name": "Docker Group",
             "status": True,
-            "details": "Container is part of the 'docker' group, meaning it can control other containers."
+            "details": ["Container is part of the 'docker' group, meaning it can control other containers."]
         }
 
     # Dangerous capabilities check
@@ -70,6 +73,7 @@ def main(data):
             find_bad_caps.append(i)
     if len(find_bad_caps) > 0:
         output["bad_capabilities"] = {
+            "name": "Bad Capabilities",
             "status": True,
             "details": find_bad_caps
         }
