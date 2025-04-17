@@ -122,7 +122,53 @@ def load_user(user_id):
 @app.route('/')
 @login_required
 def index():
-    return render_template("main.html")
+    try:
+        # Get scan statistics
+        total_scans = Scans.query.count() + ImageScans.query.count()
+        total_containers = ImageScans.query.count()
+        
+        # Get recent scans (last 5)
+        recent_scans = Scans.query.order_by(Scans.date.desc()).limit(5).all()
+        
+        # Get vulnerability statistics from image scans
+        critical_vulns = 0
+        high_vulns = 0
+        medium_vulns = 0
+        low_vulns = 0
+        
+        image_scans = ImageScans.query.all()
+        for scan in image_scans:
+            if scan.scan_data and isinstance(scan.scan_data, dict):
+                for result in scan.scan_data.get('Results', []):
+                    for vuln in result.get('Vulnerabilities', []):
+                        severity = vuln.get('Severity', '').upper()
+                        if severity == 'CRITICAL':
+                            critical_vulns += 1
+                        elif severity == 'HIGH':
+                            high_vulns += 1
+                        elif severity == 'MEDIUM':
+                            medium_vulns += 1
+                        elif severity == 'LOW':
+                            low_vulns += 1
+        
+        return render_template("main.html", 
+                            total_scans=total_scans,
+                            total_containers=total_containers,
+                            recent_scans=recent_scans,
+                            critical_vulns=critical_vulns,
+                            high_vulns=high_vulns,
+                            medium_vulns=medium_vulns,
+                            low_vulns=low_vulns)
+    except Exception as e:
+        print(e)
+        return render_template("main.html", 
+                            total_scans=0,
+                            total_containers=0,
+                            recent_scans=[],
+                            critical_vulns=0,
+                            high_vulns=0,
+                            medium_vulns=0,
+                            low_vulns=0)
 
 @app.route('/about')
 def about():
@@ -455,7 +501,6 @@ def proceed_image():
 @login_required
 def scan_detail(scan_id):
     try:
-        # Check if user has access to this scan
         if not AvailableScans.query.filter_by(available_scan=scan_id, username=current_user.username).first():
             return "Access denied", 403
             
@@ -466,15 +511,21 @@ def scan_detail(scan_id):
                 
             multiple_containers = len(results) > 1
             
+            scan = Scans.query.filter_by(id=scan_id).first()
+            if not scan:
+                return "Scan not found", 404
+            
             for docker in results:
                 if docker.vulnerabilities:
-                    # Convert string to dict if it's a string
                     if isinstance(docker.vulnerabilities, str):
                         vulnerabilities = docker.vulnerabilities.replace("'", '"').strip()
                         vulnerabilities = vulnerabilities.replace("True", 'true')
                         docker.vulnerabilities = json.loads(vulnerabilities)
                         
-            return render_template('report_fin.html', results=results, multiple_containers=multiple_containers)
+            return render_template('report_fin.html', 
+                                results=results, 
+                                multiple_containers=multiple_containers,
+                                scan=scan)
             
         except Exception as e:
             print(e)
@@ -583,9 +634,11 @@ def generate_pdf_report(scan_id):
 def view_image_scan(scan_id):
     if request.method == "GET":
         try:
-            scan = ImageScans.query.filter_by(id=scan_id, username=current_user.username).first()
+            scan = ImageScans.query.filter_by(id=scan_id).first()
             if not scan:
                 return "Scan not found", 404
+            if scan.username != current_user.username and scan.username != "public":
+                return "Access denied", 403
 
             return render_template('image-scan.html', data=scan.scan_data)
 
@@ -593,6 +646,22 @@ def view_image_scan(scan_id):
             return "Internal server error", 500
     else:
         return "Method not allowed", 405
+
+
+@app.route('/image-scan/view')
+@login_required
+def view_image_scans():
+    try:
+        scans = ImageScans.query.filter(
+            (ImageScans.username == current_user.username) | 
+            (ImageScans.username == "public")
+        ).order_by(ImageScans.scan_date.desc()).all()
+        
+        return render_template('image-scans.html', scans=scans)
+
+    except Exception as e:
+        flash("Error loading image scans", "error")
+        return redirect(url_for('index'))
 
 
 if __name__ == '__main__':

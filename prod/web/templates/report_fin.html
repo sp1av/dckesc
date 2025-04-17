@@ -4,49 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Docker Security Scan Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/report_fin.css') }}">
 </head>
 <body>
-    <div class="header-container">
-        <h1>Docker Security Scan Report</h1>
-        <a href="{{ url_for('generate_pdf_report', scan_id=results[0].scan_id) }}" class="download-button">
-            Download PDF Report
-        </a>
-    </div>
-    
-    {% for docker in results %}
-    <div class="report-container">
-        <h2>
-            {% if multiple_containers %}
-                Report {{ docker.docker_id }}
-            {% else %}
-                Report
-            {% endif %}
-        </h2>
+    <div class="page-wrapper">
+        <header>
+            <div class="header-content">
+                <div class="title-section">
+                    <h1>{{ scan.name }}</h1>
+                    <p class="scan-date">Scan Date: {{ scan.date }}</p>
+                </div>
+                <a href="{{ url_for('generate_pdf_report', scan_id=results[0].scan_id) }}" class="download-button">
+                    <span class="download-icon">📥</span>
+                    Download PDF Report
+                </a>
+            </div>
+        </header>
+        
+        <main class="reports-container">
+            {% for docker in results %}
+            <div class="report-card">
+                <div class="report-header">
+                    <h2>
+                        {% if multiple_containers %}
+                            Container {{ docker.docker_id }}
+                        {% else %}
+                            Scan Results
+                        {% endif %}
+                    </h2>
+                </div>
 
-        {% if docker.vulnerabilities %}
-            {% for vuln_key, vuln_data in docker.vulnerabilities.items() %}
-                <h3>{{ vuln_data.name if vuln_data.name else vuln_key | capitalize }}:</h3>
-                <p>Status: {{ vuln_data.status }}</p>
+                {% if docker.vulnerabilities %}
+                    <div class="vulnerabilities-list">
+                        {% for vuln_key, vuln_data in docker.vulnerabilities.items() %}
+                            <div class="vulnerability-card">
+                                <div class="vulnerability-header">
+                                    <h3>{{ vuln_data.name if vuln_data.name else vuln_key | capitalize }}</h3>
+                                    <span class="status-badge status-{{ vuln_data.status | lower }}">
+                                    </span>
+                                </div>
 
-                {% if vuln_data.details %}
-                    {% if vuln_data.details is iterable %}
-                        <ul>
-                            {% for detail in vuln_data.details %}
-                                <li>{{ detail }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Details: {{ vuln_data.details }}</p>
-                    {% endif %}
+                                {% if vuln_data.details %}
+                                    <div class="vulnerability-details">
+                                        {% if vuln_data.details is iterable and vuln_data.details is not string %}
+                                            <ul class="details-list">
+                                                {% for detail in vuln_data.details %}
+                                                    <li>{{ detail }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p class="details-text">{{ vuln_data.details }}</p>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-vulnerabilities">
+                        <div class="success-icon">✅</div>
+                        <p>No vulnerabilities found. The container is secure.</p>
+                    </div>
                 {% endif %}
+            </div>
             {% endfor %}
-        {% else %}
-            <p>No vulnerabilities found. The container is secure.</p>
-        {% endif %}
+        </main>
     </div>
-    {% endfor %}
-
-
 </body>
 </html>

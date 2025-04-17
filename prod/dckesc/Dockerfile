@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     openssh-server \
     libcap2-bin \
-    curl
+    curl \
+    supervisor
 
 # Create web-app user and group with home directory
 RUN groupadd -r web-app && useradd -r -g web-app -s /bin/bash -m -d /home/web-app web-app
@@ -49,9 +50,7 @@ RUN chown -R web-app:web-app /dckesc && \
     chown -R web-app:web-app /home/web-app && \
     chmod 700 /home/web-app
 
-RUN service ssh start
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN chmod 644 /etc/supervisor/conf.d/supervisord.conf
 
-USER web-app
-
-CMD ["python3", "/dckesc/dckesc.py"]
-#CMD ["gunicorn", "--bind", "0.0.0.0:1703", "dckesc:app"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

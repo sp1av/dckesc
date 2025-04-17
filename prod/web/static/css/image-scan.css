@@ -1,88 +1,312 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+:root {
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --background-start: #f6f9fc;
+    --background-end: #eef2f7;
+    --text-color: #2c3e50;
+    --border-color: #e0e6ed;
+    --card-bg: #ffffff;
+    --critical-color: #dc3545;
+    --high-color: #ff6b6b;
+    --medium-color: #ffc107;
+    --low-color: #28a745;
+    --info-color: #17a2b8;
+}
 
 body {
-    background-color: black;
-    color: #00ff00;
-    font-family: 'Press Start 2P', cursive;
-    text-align: center;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--background-start), var(--background-end));
+    color: var(--text-color);
 }
 
-h1, h2 {
-    color: #00ff00;
-    margin-bottom: 20px;
+.page-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
-a {
-    color: #00ff00;
-    text-decoration: none;
+header {
+    text-align: center;
+    margin-bottom: 3rem;
 }
 
-a:hover {
-    color: #00cc00;
+header h1 {
+    font-size: 2.5rem;
+    color: var(--text-color);
+    margin: 0 0 1rem 0;
+    font-weight: 600;
 }
 
-.container-wrapper {
+.scan-info {
     display: flex;
     justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    background: var(--card-bg);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.info-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.summary-section {
+    margin-bottom: 3rem;
+}
+
+.summary-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    color: var(--text-color);
+}
+
+.severity-summary {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.severity-item {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    min-width: 150px;
+    transition: transform 0.3s ease;
+}
+
+.severity-item:hover {
+    transform: translateY(-5px);
+}
+
+.severity-count {
+    display: block;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.severity-label {
+    font-size: 1rem;
+    color: #666;
+}
+
+.severity-item.critical .severity-count { color: var(--critical-color); }
+.severity-item.high .severity-count { color: var(--high-color); }
+.severity-item.medium .severity-count { color: var(--medium-color); }
+.severity-item.low .severity-count { color: var(--low-color); }
+
+.vulnerabilities-section {
+    margin-bottom: 3rem;
+}
+
+.vulnerabilities-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    color: var(--text-color);
+}
+
+.vulnerability-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.vulnerability-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    border-left: 4px solid;
+}
+
+.vulnerability-card.severity-critical { border-left-color: var(--critical-color); }
+.vulnerability-card.severity-high { border-left-color: var(--high-color); }
+.vulnerability-card.severity-medium { border-left-color: var(--medium-color); }
+.vulnerability-card.severity-low { border-left-color: var(--low-color); }
+
+.vulnerability-header {
+    display: flex;
+    justify-content: space-between;
     align-items: flex-start;
-    gap: 40px;
-    max-width: 1400px;
-    margin: auto;
-    padding: 20px;
+    margin-bottom: 1rem;
 }
 
-.container {
-    width: 100%;
-    padding: 30px;
-    border: 2px solid #00ff00;
-    text-align: left;
+.vulnerability-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-ul, ol {
-    text-align: left;
+.vulnerability-title h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.cve-link {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.cve-link:hover {
+    color: var(--primary-color);
+}
+
+.severity-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.severity-badge.severity-critical { background-color: rgba(220, 53, 69, 0.1); color: var(--critical-color); }
+.severity-badge.severity-high { background-color: rgba(255, 107, 107, 0.1); color: var(--high-color); }
+.severity-badge.severity-medium { background-color: rgba(255, 193, 7, 0.1); color: var(--medium-color); }
+.severity-badge.severity-low { background-color: rgba(40, 167, 69, 0.1); color: var(--low-color); }
+
+.cvss-score {
+    background: rgba(52, 152, 219, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.score-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.score-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.vulnerability-details {
+    margin-top: 1rem;
+}
+
+.description {
+    margin: 1rem 0;
     line-height: 1.6;
 }
 
-.vulnerability-list li {
-    margin-bottom: 15px;
-    background-color: #111;
-    border-radius: 5px;
-    padding: 10px;
+.package-info {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin: 1rem 0;
 }
 
-.severity {
-    font-weight: bold;
-    color: #e74c3c;
+.package-name {
+    font-weight: 500;
 }
 
-.cvss-score {
-    font-weight: bold;
-    color: #2980b9;
+.package-version {
+    color: #666;
+    margin-left: 0.5rem;
 }
 
-.reference-links a {
-    color: #00ff00;
+.reference-links {
+    margin-top: 1.5rem;
+}
+
+.reference-links h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: #666;
+}
+
+.links-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.reference-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 20px;
+    color: var(--primary-color);
     text-decoration: none;
-    margin-right: 10px;
+    transition: all 0.3s ease;
 }
 
-.reference-links a:hover {
-    color: #00cc00;
+.reference-link:hover {
+    background: rgba(52, 152, 219, 0.2);
+    transform: translateY(-2px);
 }
 
-.section-title {
-    color: #ff5733;
-    font-size: 1.2em;
-    margin-top: 20px;
+.link-icon {
+    font-size: 1rem;
 }
 
-.link-text {
-    color: #ff5733;
-    text-decoration: underline;
+.no-vulnerabilities {
+    text-align: center;
+    padding: 2rem;
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: #666;
 }
 
-.link-text:hover {
-    color: #ff9966;
+@media (max-width: 768px) {
+    .page-wrapper {
+        padding: 1rem;
+    }
+
+    .scan-info {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .severity-summary {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .severity-item {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .vulnerability-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .cvss-score {
+        align-self: flex-start;
+    }
 }

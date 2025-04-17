@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Scans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/image-scans.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header>
+            <h1>Image Scans</h1>
+        </header>
+
+        <div class="container-wrapper">
+            <div class="container">
+                {% if scans %}
+                    <table class="scans-table">
+                        <thead>
+                            <tr>
+                                <th>Image Name</th>
+                                <th>Registry</th>
+                                <th>Scan Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for scan in scans %}
+                                <tr>
+                                    <td>{{ scan.image_name }}</td>
+                                    <td>{{ scan.registry }}</td>
+                                    <td>{{ scan.scan_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_image_scan', scan_id=scan.id) }}" class="btn btn-view">View Details</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-scans">No image scans found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

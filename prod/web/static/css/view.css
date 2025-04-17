@@ -1,57 +1,98 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+:root {
+    --primary-color: #4CAF50;
+    --primary-hover: #45a049;
+    --background-start: #f6f9fc;
+    --background-end: #eef2f7;
+    --text-color: #2c3e50;
+    --border-color: #e0e6ed;
+    --offensive-color: #dc3545;
+    --defensive-color: #007bff;
+    --card-bg: rgba(255, 255, 255, 0.95);
+}
+
 body {
-    background-color: black;
-    color: #00ff00;
-    font-family: 'Press Start 2P', cursive;
-    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--background-start), var(--background-end));
+    color: var(--text-color);
 }
 
 h1 {
-    margin-bottom: 20px;
-    color: #00ff00;
+    margin: 2rem 0;
+    color: var(--text-color);
+    font-weight: 600;
+    text-align: center;
 }
 
 .scan-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
+    gap: 1.5rem;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    max-width: 1200px;
 }
 
 .scan-card {
     width: 300px;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 1.5rem;
+    border-radius: 12px;
     text-decoration: none;
-    color: white;
+    color: var(--text-color);
     display: flex;
     flex-direction: column;
     align-items: center;
-    border: 2px solid #00ff00;
+    background-color: var(--card-bg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
 
 .offensive {
-    background-color: red;
+    border-left: 4px solid var(--offensive-color);
 }
 
 .defensive {
-    background-color: blue;
+    border-left: 4px solid var(--defensive-color);
 }
 
 .scan-info h2 {
-    font-size: 18px;
-    margin: 10px 0;
+    font-size: 1.2rem;
+    margin: 1rem 0;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
 .scan-date {
-    font-size: 14px;
-    color: #ffffff;
-    opacity: 0.8;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 0.5rem;
 }
 
 .scan-card:hover {
-    transform: scale(1.05);
-    transition: 0.3s;
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+    .scan-container {
+        padding: 0 1rem;
+    }
+    
+    .scan-card {
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+        margin: 1.5rem 0;
+    }
 }

@@ -7,66 +7,129 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/image-scan.css') }}">
 </head>
 <body>
-    <h1>Scan Result - {{ data.ArtifactName }}</h1>
+    <div class="page-wrapper">
+        <header>
+            <h1>Scan Result</h1>
+            <div class="scan-info">
+                <div class="info-item">
+                    <span class="info-label">Image:</span>
+                    <span class="info-value">{{ data.ArtifactName }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Scan Date:</span>
+                    <span class="info-value">{{ data.CreatedAt }}</span>
+                </div>
+            </div>
+        </header>
 
-    <h2 class="section-title">Vulnerabilities</h2>
-    <div class="container-wrapper">
-        <div class="container">
-            <ul class="vulnerability-list">
+        <div class="summary-section">
+            <h2>Vulnerability Summary</h2>
+            <div class="severity-summary">
+                {% set critical_count = namespace(count=0) %}
+                {% set high_count = namespace(count=0) %}
+                {% set medium_count = namespace(count=0) %}
+                {% set low_count = namespace(count=0) %}
+                
                 {% for result in data.Results %}
                     {% if result.Vulnerabilities %}
                         {% for vuln in result.Vulnerabilities %}
-                            <li>
-                                <h3>{{ vuln.Title or "No title provided" }}</h3>
-
-                                {% if vuln.VulnerabilityID %}
-                                    <p><strong class="section-title">CVE:</strong>
-                                        <a href="{{ vuln.PrimaryURL or '#' }}" target="_blank">{{ vuln.VulnerabilityID }}</a>
-                                    </p>
-                                {% endif %}
-
-                                <p><strong class="section-title">Severity:</strong>
-                                    <span class="severity severity-{{ vuln.Severity | lower }}">
-                                        {{ vuln.Severity or "Unknown" }}
-                                    </span>
-                                </p>
-
-                                {% if vuln.CVSS is defined and vuln.CVSS.nvd is defined and vuln.CVSS.nvd.V3Score is defined %}
-                                    <p><strong class="section-title">CVSS v3.1 Score:</strong>
-                                        <span class="cvss-score">{{ vuln.CVSS.nvd.V3Score }}</span>
-                                    </p>
-                                {% else %}
-                                    <p><strong class="section-title">CVSS v3.1 Score:</strong>
-                                        <em>Not available</em>
-                                    </p>
-                                {% endif %}
-
-                                {% if vuln.Description %}
-                                    <p><strong class="section-title">Description:</strong> {{ vuln.Description }}</p>
-                                {% endif %}
-
-                                {% if vuln.PkgName %}
-                                    <p><strong class="section-title">Package:</strong>
-                                        {{ vuln.PkgName }}
-                                        {% if vuln.InstalledVersion %}(Version: {{ vuln.InstalledVersion }}){% endif %}
-                                    </p>
-                                {% endif %}
-
-                                {% if vuln.References %}
-                                    <div class="reference-links">
-                                        <strong class="section-title">References:</strong><br>
-                                        {% for reference in vuln.References %}
-                                            <a href="{{ reference }}" class="link-text" target="_blank">Link</a><br>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </li>
+                            {% if vuln.Severity == 'CRITICAL' %}
+                                {% set critical_count.count = critical_count.count + 1 %}
+                            {% elif vuln.Severity == 'HIGH' %}
+                                {% set high_count.count = high_count.count + 1 %}
+                            {% elif vuln.Severity == 'MEDIUM' %}
+                                {% set medium_count.count = medium_count.count + 1 %}
+                            {% elif vuln.Severity == 'LOW' %}
+                                {% set low_count.count = low_count.count + 1 %}
+                            {% endif %}
                         {% endfor %}
-                    {% else %}
-                        <li><em>No vulnerabilities found in {{ result.Target }}</em></li>
                     {% endif %}
                 {% endfor %}
-            </ul>
+
+                <div class="severity-item critical">
+                    <span class="severity-count">{{ critical_count.count }}</span>
+                    <span class="severity-label">Critical</span>
+                </div>
+                <div class="severity-item high">
+                    <span class="severity-count">{{ high_count.count }}</span>
+                    <span class="severity-label">High</span>
+                </div>
+                <div class="severity-item medium">
+                    <span class="severity-count">{{ medium_count.count }}</span>
+                    <span class="severity-label">Medium</span>
+                </div>
+                <div class="severity-item low">
+                    <span class="severity-count">{{ low_count.count }}</span>
+                    <span class="severity-label">Low</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="vulnerabilities-section">
+            <h2>Detailed Findings</h2>
+            <div class="vulnerability-list">
+                {% for result in data.Results %}
+                    {% if result.Vulnerabilities %}
+                        {% for vuln in result.Vulnerabilities %}
+                            <div class="vulnerability-card severity-{{ vuln.Severity | lower }}">
+                                <div class="vulnerability-header">
+                                    <div class="vulnerability-title">
+                                        {% if vuln.VulnerabilityID %}
+                                            <h3>
+                                                <a href="{{ vuln.PrimaryURL or '#' }}" target="_blank" class="cve-link">
+                                                    {{ vuln.VulnerabilityID }}
+                                                </a>
+                                            </h3>
+                                        {% endif %}
+                                        <span class="severity-badge severity-{{ vuln.Severity | lower }}">
+                                            {{ vuln.Severity or "Unknown" }}
+                                        </span>
+                                    </div>
+                                    {% if vuln.CVSS is defined and vuln.CVSS.nvd is defined and vuln.CVSS.nvd.V3Score is defined %}
+                                        <div class="cvss-score">
+                                            <span class="score-label">CVSS v3.1</span>
+                                            <span class="score-value">{{ vuln.CVSS.nvd.V3Score }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="vulnerability-details">
+                                    {% if vuln.Description %}
+                                        <p class="description">{{ vuln.Description }}</p>
+                                    {% endif %}
+
+                                    {% if vuln.PkgName %}
+                                        <div class="package-info">
+                                            <span class="package-name">{{ vuln.PkgName }}</span>
+                                            {% if vuln.InstalledVersion %}
+                                                <span class="package-version">(Version: {{ vuln.InstalledVersion }})</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if vuln.References %}
+                                        <div class="reference-links">
+                                            <h4>References</h4>
+                                            <div class="links-container">
+                                                {% for reference in vuln.References %}
+                                                    <a href="{{ reference }}" class="reference-link" target="_blank">
+                                                        <span class="link-icon">🔗</span>
+                                                        <span class="link-text">Reference</span>
+                                                    </a>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-vulnerabilities">
+                            <p>No vulnerabilities found in {{ result.Target }}</p>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 </body>

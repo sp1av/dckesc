@@ -224,6 +224,7 @@ def start():
 def image_scan():
     def clean_trivy_output(data):
         keep_keys = [
+            "Title",
             "VulnerabilityID",
             "PkgID",
             "PkgName",
@@ -286,7 +287,7 @@ def image_scan():
             return jsonify({"error": f"Trivy scan failed: {result.stderr}"}), 500
         try:
             scan_data = json.loads(result.stdout)
-            cleaned_data = clean_trivy_output(scan_data)
+            cleaned_data = scan_data
         except Exception as e:
             print("json error")
             return jsonify({"error": str(e)}), 500
@@ -314,7 +315,6 @@ def image_scan():
 
 
 if __name__ == '__main__':
-    os.system("service ssh start")
     parse_modules()
     with app.app_context():
         db.create_all(bind_key='dckesc')

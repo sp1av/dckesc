@@ -1,64 +1,249 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
-body {
-    background-color: black;
-    color: #00ff00;
-    font-family: 'Press Start 2P', cursive;
-    text-align: center;
-    padding: 20px;
+:root {
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --success-color: #2ecc71;
+    --warning-color: #f1c40f;
+    --danger-color: #e74c3c;
+    --background-start: #f6f9fc;
+    --background-end: #eef2f7;
+    --text-color: #2c3e50;
+    --text-light: #7f8c8d;
+    --border-color: #e0e6ed;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
 }
 
-.header-container {
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--background-start), var(--background-end));
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.page-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    margin-bottom: 3rem;
+}
+
+.header-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding: 0 20px;
+    align-items: flex-start;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.title-section h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+.scan-date {
+    margin: 0;
+    color: #666;
+    font-size: 16px;
 }
 
 .download-button {
-    background-color: #00ff00;
-    color: black;
-    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
     text-decoration: none;
-    border-radius: 5px;
-    font-size: 0.8em;
-    transition: all 0.3s ease;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background-color 0.2s;
 }
 
 .download-button:hover {
-    background-color: #00cc00;
-    box-shadow: 0 0 10px #00ff00;
+    background-color: #0056b3;
 }
 
-.report-container {
-    width: 80%;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #222;
-    border: 2px solid #00ff00;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+.download-icon {
+    font-size: 1.2rem;
 }
 
-h1 {
-    color: #00ff00;
-    text-shadow: 0 0 10px #00ff00;
-    margin: 0;
+.reports-container {
+    display: grid;
+    gap: 2rem;
+}
+
+.report-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.report-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 h2 {
-    color: #00ccff;
-    margin-bottom: 15px;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 1rem;
 }
 
-ul {
-    text-align: left;
-    display: inline-block;
-    padding: 0;
+.scan-info {
+    display: flex;
+    gap: 2rem;
 }
 
-li {
-    margin: 5px 0;
-    font-size: 1.1em;
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-label {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.info-value {
+    font-weight: 500;
+}
+
+.vulnerabilities-list {
+    padding: 1.5rem 2rem;
+}
+
+.vulnerability-card {
+    background: var(--background-start);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.vulnerability-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-passed {
+    background-color: rgba(46, 204, 113, 0.1);
+    color: var(--success-color);
+}
+
+.status-failed {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+}
+
+.status-warning {
+    background-color: rgba(241, 196, 15, 0.1);
+    color: var(--warning-color);
+}
+
+.vulnerability-details {
+    margin-top: 1rem;
+}
+
+.details-list {
+    list-style: none;
+    padding-left: 1rem;
+}
+
+.details-list li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.details-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}
+
+.details-text {
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+.no-vulnerabilities {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: rgba(46, 204, 113, 0.1);
+    border-radius: 8px;
+    margin: 1.5rem 2rem;
+}
+
+.success-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.no-vulnerabilities p {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .page-wrapper {
+        padding: 1rem;
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .scan-info {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .vulnerability-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
 }

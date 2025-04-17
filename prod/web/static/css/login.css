@@ -1,122 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+:root {
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --background-start: #f6f9fc;
+    --background-end: #eef2f7;
+    --text-color: #2c3e50;
+    --border-color: #e0e6ed;
+    --input-border: #ddd;
+    --input-focus: #3498db;
+    --error-color: #dc3545;
+    --success-color: #28a745;
+}
 
 body {
-    background-color: black;
-    color: #00ff00;
-    font-family: 'Press Start 2P', cursive;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--background-start), var(--background-end));
+    color: var(--text-color);
+}
+
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+}
+
+.login-header {
     text-align: center;
+    margin-bottom: 2.5rem;
 }
 
-h1, h2 {
-    color: #00ff00;
-    margin-bottom: 20px;
+.login-header h1 {
+    font-size: 2.5rem;
+    color: var(--text-color);
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
 }
 
-button {
-    background-color: #00ff00;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    font-family: inherit;
+.login-header p {
+    color: #666;
+    margin: 0;
+    font-size: 1.1rem;
 }
 
-button:hover {
-    background-color: #00cc00;
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-.offensive-btn {
-    background-color: red;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-}
-
-.offensive-btn:hover {
-    background-color: darkred;
-}
-
-.defensive-btn {
-    background-color: blue;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-}
-
-.defensive-btn:hover {
-    background-color: darkblue;
-}
-
-form {
+label {
     display: block;
-    margin-top: 20px;
-    border: 2px solid #00ff00;
-    padding: 20px;
-    width: 80%;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
 }
 
-input, select {
-    width: calc(100% - 24px);
-    padding: 10px;
-    margin-top: 10px;
-    border: 2px solid #00ff00;
-    background-color: black;
-    color: #00ff00;
-    font-family: inherit;
+input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
-input[type="number"] {
-    width: 100px;
+input:focus {
+    outline: none;
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.login-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .container-id-group {
     display: flex;
     align-items: center;
-    margin-top: 10px;
+    gap: 1rem;
+    margin: 1rem 0;
 }
 
 .container-id-group input {
     flex-grow: 1;
-    margin-right: 5px;
+    margin: 0;
 }
 
 .container-id-group button {
-    background-color: red;
+    background-color: var(--error-color);
     color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 14px;
-    width: 30px;
-    height: 30px;
+    padding: 0.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
+    border-radius: 6px;
 }
 
 .container-id-group button:hover {
-    background-color: darkred;
+    background-color: #c82333;
 }
 
 #add-container-id {
-    background-color: #00ff00;
-    color: black;
-    font-size: 20px;
-    padding: 5px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    width: auto;
+    padding: 0.5rem 1rem;
 }
 
 #add-container-id:hover {
-    background-color: #00cc00;
+    background-color: var(--primary-hover);
 }
 
 .show {
     display: block;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 2rem;
+    }
+
+    .login-header h1 {
+        font-size: 2rem;
+    }
 }
