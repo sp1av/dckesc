@@ -72,12 +72,12 @@ class ImageScans(db.Model):
     __bind_key__ = 'dckesc'
 
     id = db.Column(db.Integer, primary_key=True) #scan id
-    uuid = db.Column(db.String(40), nullable=False, unique=True) # uuid.uuid4() - len=38 - for registry
-    image_name = db.Column(db.String(20), nullable=False) # image name
+    image_name = db.Column(db.String(40), nullable=False) # image name
     registry = db.Column(db.String(20), nullable=False)  # image registry
     scan_date = db.Column(db.DateTime, default=datetime.utcnow)
-    scan_data = db.Column(db.JSON) # 
+    scan_data = db.Column(db.JSON) # full image report
     username = db.Column(db.String(100), nullable=False)
+    uuid = db.Column(db.String(40), nullable=True, unique=True) # uuid.uuid4() - len=38 - for registry
 
 class Docker(db.Model):
     __bind_key__ = 'dckesc'
@@ -151,24 +151,10 @@ def index():
                         elif severity == 'LOW':
                             low_vulns += 1
         
-        return render_template("main.html", 
-                            total_scans=total_scans,
-                            total_containers=total_containers,
-                            recent_scans=recent_scans,
-                            critical_vulns=critical_vulns,
-                            high_vulns=high_vulns,
-                            medium_vulns=medium_vulns,
-                            low_vulns=low_vulns)
+        return render_template("main.html", total_scans=total_scans, total_containers=total_containers, recent_scans=recent_scans, critical_vulns=critical_vulns, high_vulns=high_vulns, medium_vulns=medium_vulns, low_vulns=low_vulns)
     except Exception as e:
         print(e)
-        return render_template("main.html", 
-                            total_scans=0,
-                            total_containers=0,
-                            recent_scans=[],
-                            critical_vulns=0,
-                            high_vulns=0,
-                            medium_vulns=0,
-                            low_vulns=0)
+        return render_template("main.html", total_scans=0, total_containers=0, recent_scans=[], critical_vulns=0, high_vulns=0, medium_vulns=0, low_vulns=0)
 
 @app.route('/about')
 def about():
@@ -663,6 +649,94 @@ def view_image_scans():
         flash("Error loading image scans", "error")
         return redirect(url_for('index'))
 
+
+@app.route('/image-scan/create', methods=['GET', 'POST'])
+@login_required
+def create_image_scan():
+    if request.method == 'POST':
+        try:
+            images = request.form.getlist('images[]')
+            is_public = request.form.get('is_public') == 'on'
+            script_mode = request.form.get('script_mode') == 'on'
+            
+            if not images:
+                flash("Please add at least one image", "error")
+                return redirect(url_for('create_image_scan'))
+            
+            if script_mode:
+                control_id = str(uuid.uuid4())
+                script_content = ""
+                
+                with open("/app/stuff_scripts/image_scan.sh", "r") as file:
+                    script_content = file.read()
+                
+                script_content = script_content.replace("$HOSTIP_SPLAV", str(HOST))
+                script_content = script_content.replace("$CONTROL_SPLAV", str(control_id))
+                
+                image_list = " ".join(images)
+                script_content = script_content.replace("$IMAGES_SPLAV", image_list)
+                
+                buffer = io.BytesIO()
+                buffer.write(script_content.encode('utf-8'))
+                buffer.seek(0)
+                
+                return send_file(
+                    buffer,
+                    as_attachment=True,
+                    download_name="image_scan.sh",
+                    mimetype="text/plain"
+                )
+            else:
+                registry = request.form.get('registry')
+                tls_verify = request.form.get('tls_verify') == 'on'
+                registry_username = request.form.get('registry_username')
+                registry_password = request.form.get('registry_password')
+
+                for image in images:
+                    scan_uuid = str(uuid.uuid4())
+                    
+                    data = {
+                        "image": image,
+                        "registry": registry,
+                        "uuid": scan_uuid,
+                        "tls_verify": tls_verify
+                    }
+
+                    if registry_username and registry_password:
+                        data.update({
+                            "registry_username": registry_username,
+                            "registry_password": registry_password
+                        })
+                    
+                    requests.post("http://dckesc:2517/api/image/scan", data=data)
+                
+                flash("Image scans started successfully!", "success")
+                return redirect(url_for('view_image_scans'))
+                
+        except Exception as e:
+            print(e)
+            flash("Error creating image scan", "error")
+            return redirect(url_for('create_image_scan'))
+            
+    return render_template('create-image-scan.html')
+
+
+@app.route('/api/image-scan/create', methods=['POST'])
+def api_image_scan():
+    image = request.form["image"]
+    registry = request.form["registry"]
+    username = request.form["username"]
+    password = request.form["password"]
+    tls_verify = request.form["tls_verify"]
+    data = {
+        "image": image,
+        "registry": registry,
+        "username": username,
+        "password": password,
+        "tls_verify": tls_verify
+    }
+    requests.post("http://dckesc:2517//api/image/scan", data=data)
+    return "Scan started ", 200
 
 if __name__ == '__main__':
 

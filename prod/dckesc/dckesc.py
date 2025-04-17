@@ -13,6 +13,7 @@ import time
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 import subprocess
+import shutil
 
 from config import Config
 
@@ -54,12 +55,12 @@ class ImageScans(db.Model):
     __bind_key__ = 'dckesc'
 
     id = db.Column(db.Integer, primary_key=True) #scan id
-    uuid = db.Column(db.String(40), nullable=False, unique=True) # uuid.uuid4() - len=38 - for registry
-    image_name = db.Column(db.String(20), nullable=False) # image name
+    image_name = db.Column(db.String(40), nullable=False) # image name
     registry = db.Column(db.String(20), nullable=False)  # image registry
     scan_date = db.Column(db.DateTime, default=datetime.utcnow)
     scan_data = db.Column(db.JSON) # full image report
     username = db.Column(db.String(100), nullable=False)
+    uuid = db.Column(db.String(40), nullable=True, unique=True) # uuid.uuid4() - len=38 - for registry
 
 
 class Ports(db.Model):
@@ -222,9 +223,8 @@ def start():
 
 @app.route("/api/image/scan", methods=["POST"])
 def image_scan():
-    def clean_trivy_output(data):
+    def clean_output(data):
         keep_keys = [
-            "Title",
             "VulnerabilityID",
             "PkgID",
             "PkgName",
@@ -258,57 +258,108 @@ def image_scan():
         try:
             image = request.form["image"]
             registry = request.form["registry"]
-            uuid = request.form["uuid"]
-            username = request.form["username"]
-            username = str(os.getenv("REGISTRY_USERNAME"))
-            password = str(os.getenv("REGISTRY_PASSWORD"))
+            try:
+                username = request.form["username"]
+                password = request.form["password"]
+            except:
+                username = None
+                password = None
+            try:
+                tls_verify = request.form["tls_verify"]
+            except:
+                tls_verify = None
+            if tls_verify == "True":
+                tls_verify = True
+            else:
+                tls_verify = False
+            if registry == "registry:5000":
+                username = str(os.getenv("REGISTRY_USERNAME"))
+                password = str(os.getenv("REGISTRY_PASSWORD"))
         except Exception as e:
             print("request form error")
-            return jsonify({"error": str(e)}), 400
+            print(e)
+            return "Error", 400
 
-        cmd = [
-            "trivy",
-            "--insecure",
-            "--image-src", "remote",
-            "image",
-            "--format", "json",
-            f"{registry}/{image}",
-            "--username", username,
-            "--password", password
-        ]
+        base_dir = "/tmp/trivy"
+        cache_dir = os.path.join(base_dir, "cache")
+        modules_dir = os.path.join(base_dir, "modules")
+        
+        for dir_path in [base_dir, cache_dir, modules_dir]:
+            os.makedirs(dir_path, exist_ok=True)
+            os.chmod(dir_path, 0o777)
+        
+
+        if tls_verify:
+            cmd = [
+                "trivy",
+                "--image-src", "remote",
+                "image",
+                "--format", "json",
+                f"{registry}/{image}"
+            ]
+        
+        elif not tls_verify:
+            cmd = [
+                "trivy",
+                "--insecure",
+                "--image-src", "remote",
+                "image",
+                "--format", "json",
+                f"{registry}/{image}"
+            ]
+        
+        if username and password:
+            cmd.append("--username")
+            cmd.append(username)
+            cmd.append("--password")
+            cmd.append(password)
+
+        if registry == "default" or registry == "docker.io":
+            cmd = [
+                "trivy",
+                "--image-src", "remote",
+                "image",
+                "--format", "json",
+                f"docker.io/{image}"
+            ]
 
         try:
             result = subprocess.run(cmd, capture_output=True, text=True)
         except Exception as e:
             print("subprocess error")
-            return jsonify({"error": str(e)}), 500
+            print(e)
+            return "Error", 500
         
         if result.returncode != 0:
-            return jsonify({"error": f"Trivy scan failed: {result.stderr}"}), 500
+            print(result.stderr)
+            return "Error", 500
         try:
             scan_data = json.loads(result.stdout)
-            cleaned_data = scan_data
+            cleaned_data = clean_output(scan_data)
         except Exception as e:
             print("json error")
-            return jsonify({"error": str(e)}), 500
+            print(e)
+            return "Error", 500
         try:
             scan = ImageScans(
                 image_name=image,
                 registry=registry,
                 scan_data=cleaned_data,
-                uuid=uuid,
-                username=username
+                username="splav" # TODO: change to username
             )
             db.session.add(scan)
             db.session.commit()
         except Exception as e:
             print("db error")
-            return jsonify({"error": str(e)}), 500
+            print(e)    
+            return "Error", 500
 
-        return jsonify({"message": "Scan completed successfully", "uuid": uuid}), 200
+
+        return "Scan completed successfully", 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(e)
+        return "Error", 500
 
 
 

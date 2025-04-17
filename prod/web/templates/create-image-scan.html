@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Image Scan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/create-image-scan.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header>
+            <h1>Create Image Scan</h1>
+        </header>
+
+        <div class="container">
+            <form method="POST" class="scan-form">
+                <div class="form-group">
+                    <label for="scan-mode">Scan Mode</label>
+                    <div class="mode-options">
+                        <label class="mode-option">
+                            <input type="radio" name="scan_mode" value="direct" checked>
+                            <span class="mode-title">Direct Scan</span>
+                            <span class="mode-description">Scan images directly through the web interface</span>
+                        </label>
+                        <label class="mode-option">
+                            <input type="radio" name="scan_mode" value="script">
+                            <span class="mode-title">Script Mode</span>
+                            <span class="mode-description">Generate a script to scan images locally</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="visibility">Scan Visibility</label>
+                    <div class="visibility-option">
+                        <label class="switch">
+                            <input type="checkbox" name="is_public" id="is_public">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="visibility-label">Make scan public</span>
+                    </div>
+                </div>
+
+                <div id="direct-scan-options">
+                    <div class="form-group">
+                        <label>Registry Settings</label>
+                        <div class="registry-settings">
+                            <div class="registry-input">
+                                <input type="text" name="registry" placeholder="Registry URL (e.g., registry.example.com)" required>
+                            </div>
+                            <div class="tls-option">
+                                <label class="switch">
+                                    <input type="checkbox" name="tls_verify" id="tls_verify" checked>
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="tls-label">Verify TLS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Authentication (Optional)</label>
+                        <div class="auth-inputs">
+                            <input type="text" name="registry_username" placeholder="Registry Username">
+                            <input type="password" name="registry_password" placeholder="Registry Password">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Images to Scan</label>
+                    <div id="image-list">
+                        <div class="image-input-group">
+                            <input type="text" name="images[]" placeholder="Enter image name (e.g., nginx:latest)" required>
+                            <button type="button" class="remove-btn" onclick="removeImage(this)">-</button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-image" class="add-btn" onclick="addImage()">Add Another Image</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">Start Scan</button>
+                    <a href="{{ url_for('view_image_scans') }}" class="cancel-btn">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function addImage() {
+            const imageList = document.getElementById('image-list');
+            const newGroup = document.createElement('div');
+            newGroup.className = 'image-input-group';
+            newGroup.innerHTML = `
+                <input type="text" name="images[]" placeholder="Enter image name (e.g., nginx:latest)" required>
+                <button type="button" class="remove-btn" onclick="removeImage(this)">-</button>
+            `;
+            imageList.appendChild(newGroup);
+        }
+
+        function removeImage(button) {
+            const imageList = document.getElementById('image-list');
+            if (imageList.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+
+        // Handle scan mode changes
+        document.querySelectorAll('input[name="scan_mode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const directScanOptions = document.getElementById('direct-scan-options');
+                if (this.value === 'direct') {
+                    directScanOptions.style.display = 'block';
+                } else {
+                    directScanOptions.style.display = 'none';
+                }
+            });
+        });
+
+        // Handle form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const scanMode = document.querySelector('input[name="scan_mode"]:checked').value;
+            if (scanMode === 'script') {
+                this.action = "{{ url_for('create_image_scan', script_mode='true') }}";
+            }
+        });
+    </script>
+</body>
+</html> 
