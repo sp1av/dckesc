@@ -7,8 +7,8 @@ from argon2 import PasswordHasher, exceptions
 
 ph = PasswordHasher()
 stored_hash = str(sys.argv[1])
+PORT = int(sys.argv[2])
 HOST = "127.0.0.1"
-PORT = 16139
 
 
 

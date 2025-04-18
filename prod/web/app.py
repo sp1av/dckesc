@@ -13,6 +13,7 @@ from flask import Flask, request, send_file
 from functools import wraps
 from flask import abort
 from argon2 import PasswordHasher
+import traceback
 from flask_login import current_user
 from flask import send_from_directory
 import requests
@@ -661,14 +662,14 @@ def create_image_scan():
                 user = "public"
             else:
                 user = current_user.username
-            script_mode = request.form.get('script_mode') == 'on'
+            script_mode = request.form.get('scan_mode') == 'script'
             
             if not images:
                 flash("Please add at least one image", "error")
                 return redirect(url_for('create_image_scan'))
             
             if script_mode:
-                registry_names = [uuid.uuid4() for i in images]
+                registry_names = [str(uuid.uuid4()) for i in images]
                 registry_names = " ".join(registry_names)
                 image_list = " ".join(images)
                 
@@ -721,6 +722,7 @@ def create_image_scan():
                 return redirect(url_for('view_image_scans'))
                 
         except Exception as e:
+            traceback.print_exception(e)
             print(e)
             flash("Error creating image scan", "error")
             return redirect(url_for('create_image_scan'))
@@ -734,7 +736,6 @@ def api_image_scan():
     registry = request.form["registry"]
     registry_name = request.form["registry_name"]
     owner = request.form["owner"]
-
     try:
         username = request.form["username"]
         password = request.form["password"]
@@ -742,6 +743,7 @@ def api_image_scan():
         username = "False"
         password = "False"
     tls_verify = request.form["tls_verify"]
+
     data = {
         "image": image,
         "registry": registry,
@@ -751,6 +753,7 @@ def api_image_scan():
         "registry_name": registry_name,
         "owner": owner
     }
+    
     requests.post("http://dckesc:2517//api/image/scan", data=data)
     return "Scan started ", 200
 

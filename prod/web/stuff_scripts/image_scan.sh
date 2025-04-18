@@ -4,6 +4,7 @@
 HOST="$HOSTIP_SPLAV"
 CONTROL_ID="$CONTROL_SPLAV"
 IMAGES="$IMAGES_SPLAV"
+OWNER="$OWNER_SPLAV"
 
 scan_image() {
     local image=$1
