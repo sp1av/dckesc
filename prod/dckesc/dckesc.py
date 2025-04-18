@@ -60,7 +60,8 @@ class ImageScans(db.Model):
     scan_date = db.Column(db.DateTime, default=datetime.utcnow)
     scan_data = db.Column(db.JSON) # full image report
     username = db.Column(db.String(100), nullable=False)
-    uuid = db.Column(db.String(40), nullable=True, unique=True) # uuid.uuid4() - len=38 - for registry
+    registry_name = db.Column(db.String(40), nullable=True, unique=True) # uuid.uuid4() - len=38 - for registry
+
 
 
 class Ports(db.Model):
@@ -223,6 +224,7 @@ def start():
 
 @app.route("/api/image/scan", methods=["POST"])
 def image_scan():
+    print("Output work normal")
     def clean_output(data):
         keep_keys = [
             "VulnerabilityID",
@@ -258,20 +260,12 @@ def image_scan():
         try:
             image = request.form["image"]
             registry = request.form["registry"]
-            try:
-                username = request.form["username"]
-                password = request.form["password"]
-            except:
-                username = None
-                password = None
-            try:
-                tls_verify = request.form["tls_verify"]
-            except:
-                tls_verify = None
-            if tls_verify == "True":
-                tls_verify = True
-            else:
-                tls_verify = False
+            registry_name = request.form["registry_name"]
+            owner = request.form["owner"]
+            username = request.form["username"]
+            password = request.form["password"]
+            tls_verify = request.form["tls_verify"] == "True"
+
             if registry == "registry:5000":
                 username = str(os.getenv("REGISTRY_USERNAME"))
                 password = str(os.getenv("REGISTRY_PASSWORD"))
@@ -295,7 +289,7 @@ def image_scan():
                 "--image-src", "remote",
                 "image",
                 "--format", "json",
-                f"{registry}/{image}"
+                f"{registry}/{registry_name}"
             ]
         
         elif not tls_verify:
@@ -305,10 +299,10 @@ def image_scan():
                 "--image-src", "remote",
                 "image",
                 "--format", "json",
-                f"{registry}/{image}"
+                f"{registry}/{registry_name}"
             ]
         
-        if username and password:
+        if username != "False" and password != "False":
             cmd.append("--username")
             cmd.append(username)
             cmd.append("--password")
@@ -320,7 +314,7 @@ def image_scan():
                 "--image-src", "remote",
                 "image",
                 "--format", "json",
-                f"docker.io/{image}"
+                f"docker.io/{registry_name}"
             ]
 
         try:
@@ -345,7 +339,8 @@ def image_scan():
                 image_name=image,
                 registry=registry,
                 scan_data=cleaned_data,
-                username="splav" # TODO: change to username
+                username=owner,
+                registry_name=registry_name
             )
             db.session.add(scan)
             db.session.commit()

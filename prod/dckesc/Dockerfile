@@ -8,8 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     supervisor
 
-# Create web-app user and group with home directory
-RUN groupadd -r web-app && useradd -r -g web-app -s /bin/bash -m -d /home/web-app web-app
+RUN groupadd -r webapp && useradd -r -g webapp -s /bin/bash -m -d /home/webapp webapp
 
 RUN pip install flask \
 	flask_sqlalchemy \
@@ -45,10 +44,10 @@ USER root
 WORKDIR /dckesc
 COPY . .
 
-RUN chown -R web-app:web-app /dckesc && \
+RUN chown -R webapp:webapp /dckesc && \
     chmod 755 /dckesc && \
-    chown -R web-app:web-app /home/web-app && \
-    chmod 700 /home/web-app
+    chown -R webapp:webapp /home/webapp && \
+    chmod 700 /home/webapp
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN chmod 644 /etc/supervisor/conf.d/supervisord.conf

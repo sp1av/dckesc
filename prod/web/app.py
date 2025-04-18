@@ -77,7 +77,7 @@ class ImageScans(db.Model):
     scan_date = db.Column(db.DateTime, default=datetime.utcnow)
     scan_data = db.Column(db.JSON) # full image report
     username = db.Column(db.String(100), nullable=False)
-    uuid = db.Column(db.String(40), nullable=True, unique=True) # uuid.uuid4() - len=38 - for registry
+    registry_name = db.Column(db.String(40), nullable=True, unique=True) # uuid.uuid4() - len=38 - for registry
 
 class Docker(db.Model):
     __bind_key__ = 'dckesc'
@@ -656,7 +656,11 @@ def create_image_scan():
     if request.method == 'POST':
         try:
             images = request.form.getlist('images[]')
-            is_public = request.form.get('is_public') == 'on'
+            is_public = str(request.form.get('is_public') == 'on')
+            if is_public:
+                user = "public"
+            else:
+                user = current_user.username
             script_mode = request.form.get('script_mode') == 'on'
             
             if not images:
@@ -664,18 +668,18 @@ def create_image_scan():
                 return redirect(url_for('create_image_scan'))
             
             if script_mode:
-                control_id = str(uuid.uuid4())
-                script_content = ""
+                registry_names = [uuid.uuid4() for i in images]
+                registry_names = " ".join(registry_names)
+                image_list = " ".join(images)
                 
                 with open("/app/stuff_scripts/image_scan.sh", "r") as file:
                     script_content = file.read()
                 
                 script_content = script_content.replace("$HOSTIP_SPLAV", str(HOST))
-                script_content = script_content.replace("$CONTROL_SPLAV", str(control_id))
-                
-                image_list = " ".join(images)
+                script_content = script_content.replace("$CONTROL_SPLAV", registry_names)
                 script_content = script_content.replace("$IMAGES_SPLAV", image_list)
-                
+                script_content = script_content.replace("$OWNER_SPLAV", user)
+
                 buffer = io.BytesIO()
                 buffer.write(script_content.encode('utf-8'))
                 buffer.seek(0)
@@ -687,26 +691,29 @@ def create_image_scan():
                     mimetype="text/plain"
                 )
             else:
+
                 registry = request.form.get('registry')
                 tls_verify = request.form.get('tls_verify') == 'on'
-                registry_username = request.form.get('registry_username')
-                registry_password = request.form.get('registry_password')
+                try:
+                    username = request.form["username"]
+                    password = request.form["password"]
+                except:
+                    username = "False"
+                    password = "False"
 
                 for image in images:
-                    scan_uuid = str(uuid.uuid4())
                     
                     data = {
                         "image": image,
                         "registry": registry,
-                        "uuid": scan_uuid,
-                        "tls_verify": tls_verify
+                        "registry_name": image,
+                        "tls_verify": tls_verify,
+                        "username": username,
+                        "password": password,
+                        "owner":user
                     }
 
-                    if registry_username and registry_password:
-                        data.update({
-                            "registry_username": registry_username,
-                            "registry_password": registry_password
-                        })
+
                     
                     requests.post("http://dckesc:2517/api/image/scan", data=data)
                 
@@ -725,15 +732,24 @@ def create_image_scan():
 def api_image_scan():
     image = request.form["image"]
     registry = request.form["registry"]
-    username = request.form["username"]
-    password = request.form["password"]
+    registry_name = request.form["registry_name"]
+    owner = request.form["owner"]
+
+    try:
+        username = request.form["username"]
+        password = request.form["password"]
+    except:
+        username = "False"
+        password = "False"
     tls_verify = request.form["tls_verify"]
     data = {
         "image": image,
         "registry": registry,
         "username": username,
         "password": password,
-        "tls_verify": tls_verify
+        "tls_verify": tls_verify,
+        "registry_name": registry_name,
+        "owner": owner
     }
     requests.post("http://dckesc:2517//api/image/scan", data=data)
     return "Scan started ", 200
