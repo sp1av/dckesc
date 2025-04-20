@@ -15,6 +15,7 @@ RUN pip install flask \
 	gunicorn \
 	argon2-cffi \
 	psycopg2-binary \ 
+	PyYAML \
 	reportlab --break-system-packages
 
 	

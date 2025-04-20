@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Compose Security Check</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/docker-compose-upload.css') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header>
+            <h1>Docker Compose Security Check</h1>
+            <p class="subtitle">Upload your docker-compose.yml file for security analysis</p>
+        </header>
+
+        <main class="container">
+            <div class="upload-section">
+                <form id="uploadForm" method="POST" action="{{ url_for('upload_docker_compose') }}" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file">Select docker-compose.yml file:</label>
+                        <input type="file" id="file" name="file" accept=".yml,.yaml" required>
+                    </div>
+
+
+                    <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+                </form>
+            </div>
+
+            <div id="loadingIndicator" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <p>Analyzing your docker-compose file...</p>
+            </div>
+
+            <div id="resultsSection" class="results-section hidden">
+                <h2>Analysis Results</h2>
+                <div class="results-container">
+                    <div class="severity-summary">
+                        <h3>Severity Summary</h3>
+                        <div class="severity-cards">
+                            <div class="severity-card critical">
+                                <span class="count">0</span>
+                                <span class="label">Critical</span>
+                            </div>
+                            <div class="severity-card high">
+                                <span class="count">0</span>
+                                <span class="label">High</span>
+                            </div>
+                            <div class="severity-card medium">
+                                <span class="count">0</span>
+                                <span class="label">Medium</span>
+                            </div>
+                            <div class="severity-card low">
+                                <span class="count">0</span>
+                                <span class="label">Low</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="issues-list">
+                        <h3>Security Issues</h3>
+                        <div class="issues-container">
+                        </div>
+                    </div>
+
+                    <div class="recommendations">
+                        <h3>Recommendations</h3>
+                        <div class="recommendations-container">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            loadingIndicator.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+                updateResults(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingIndicator.classList.add('hidden');
+                alert('An error occurred while analyzing the file.');
+            });
+        });
+
+        function updateResults(data) {
+            // Update severity counts
+            document.querySelector('.severity-card.critical .count').textContent = data.critical_count || 0;
+            document.querySelector('.severity-card.high .count').textContent = data.high_count || 0;
+            document.querySelector('.severity-card.medium .count').textContent = data.medium_count || 0;
+            document.querySelector('.severity-card.low .count').textContent = data.low_count || 0;
+
+            // Update issues list
+            const issuesContainer = document.querySelector('.issues-container');
+            issuesContainer.innerHTML = '';
+            data.issues.forEach(issue => {
+                const issueElement = document.createElement('div');
+                issueElement.className = `issue-item ${issue.severity.toLowerCase()}`;
+                issueElement.innerHTML = `
+                    <div class="issue-header">
+                        <span class="severity-badge ${issue.severity.toLowerCase()}">${issue.severity}</span>
+                        <span class="issue-title">${issue.title}</span>
+                    </div>
+                    <div class="issue-description">${issue.description}</div>
+                    <div class="issue-recommendation">${issue.recommendation}</div>
+                `;
+                issuesContainer.appendChild(issueElement);
+            });
+
+            // Update recommendations
+            const recommendationsContainer = document.querySelector('.recommendations-container');
+            recommendationsContainer.innerHTML = '';
+            data.recommendations.forEach(rec => {
+                const recElement = document.createElement('div');
+                recElement.className = 'recommendation-item';
+                recElement.innerHTML = `
+                    <div class="recommendation-title">${rec.title}</div>
+                    <div class="recommendation-description">${rec.description}</div>
+                `;
+                recommendationsContainer.appendChild(recElement);
+            });
+        }
+    </script>
+</body>
+</html> 

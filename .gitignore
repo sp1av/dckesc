@@ -9,3 +9,6 @@ htpasswd
 registry_data/
 .idea
 prod/web/tmp/
+tests/*
+tmp/
+

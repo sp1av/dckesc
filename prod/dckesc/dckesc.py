@@ -260,11 +260,17 @@ def image_scan():
         try:
             image = request.form["image"]
             registry = request.form["registry"]
-            registry_name = request.form["registry_name"]
+            try:
+                registry_name = request.form["registry_name"]
+            except:
+                registry_name = image
             owner = request.form["owner"]
-            username = request.form["username"]
-            password = request.form["password"]
-            tls_verify = request.form["tls_verify"] == "True"
+            try:
+                username = request.form["username"]
+                password = request.form["password"]
+            except:
+                username = "False"
+                password = "False"
 
             if registry == "registry:5000":
                 username = str(os.getenv("REGISTRY_USERNAME"))
@@ -282,26 +288,16 @@ def image_scan():
             os.makedirs(dir_path, exist_ok=True)
             os.chmod(dir_path, 0o777)
         
+        
+        cmd = [
+            "trivy",
+            "--insecure",
+            "--image-src", "remote",
+            "image",
+            "--format", "json",
+            f"{registry}/{registry_name}"
+        ]
 
-        if tls_verify:
-            cmd = [
-                "trivy",
-                "--image-src", "remote",
-                "image",
-                "--format", "json",
-                f"{registry}/{registry_name}"
-            ]
-        
-        elif not tls_verify:
-            cmd = [
-                "trivy",
-                "--insecure",
-                "--image-src", "remote",
-                "image",
-                "--format", "json",
-                f"{registry}/{registry_name}"
-            ]
-        
         if username != "False" and password != "False":
             cmd.append("--username")
             cmd.append(username)

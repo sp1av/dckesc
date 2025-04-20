@@ -5,7 +5,7 @@ import io
 import uuid
 import socket
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, flash, send_file
+from flask import Flask, render_template, redirect, url_for, flash, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
@@ -26,6 +26,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+import yaml
 
 app = Flask(__name__)
 HOST = Variables.HOST
@@ -694,7 +695,6 @@ def create_image_scan():
             else:
 
                 registry = request.form.get('registry')
-                tls_verify = request.form.get('tls_verify') == 'on'
                 try:
                     username = request.form["username"]
                     password = request.form["password"]
@@ -708,7 +708,6 @@ def create_image_scan():
                         "image": image,
                         "registry": registry,
                         "registry_name": image,
-                        "tls_verify": tls_verify,
                         "username": username,
                         "password": password,
                         "owner":user
@@ -742,20 +741,141 @@ def api_image_scan():
     except:
         username = "False"
         password = "False"
-    tls_verify = request.form["tls_verify"]
 
     data = {
         "image": image,
         "registry": registry,
         "username": username,
         "password": password,
-        "tls_verify": tls_verify,
         "registry_name": registry_name,
         "owner": owner
     }
     
     requests.post("http://dckesc:2517//api/image/scan", data=data)
     return "Scan started ", 200
+
+@app.route('/docker-compose/upload', methods=['GET', 'POST'])
+def upload_docker_compose():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not file.filename.endswith(('.yml', '.yaml')):
+            return jsonify({'error': 'Invalid file type. Please upload a YAML file'}), 400
+
+        try:
+            content = file.read().decode('utf-8')
+            compose_data = yaml.safe_load(content)
+            
+
+
+            # Analyze the docker-compose file
+            analysis_results = analyze_docker_compose(compose_data)
+            
+            return jsonify(analysis_results)
+            
+        except yaml.YAMLError as e:
+            return jsonify({'error': f'Invalid YAML format: {str(e)}'}), 400
+        except Exception as e:
+            return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+
+    return render_template('docker-compose-upload.html')
+
+def analyze_docker_compose(compose_data):
+    """Analyze a docker-compose file for security issues."""
+    issues = []
+    recommendations = []
+    
+    if 'services' in compose_data:
+        for service_name, service_config in compose_data['services'].items():
+            if service_config.get('privileged', False):
+                issues.append({
+                    'severity': 'High',
+                    'title': f'Privileged mode enabled in {service_name}',
+                    'description': 'Running containers in privileged mode gives them full access to the host system.',
+                    'recommendation': 'Avoid using privileged mode unless absolutely necessary.'
+                })
+            
+            if 'user' not in service_config:
+                issues.append({
+                    'severity': 'Medium',
+                    'title': f'No user specified in {service_name}',
+                    'description': 'Container running as root user by default.',
+                    'recommendation': 'Specify a non-root user in the service configuration.'
+                })
+            
+            # Check for exposed ports
+            if 'ports' in service_config:
+                for port in service_config['ports']:
+                    if isinstance(port, str) and ':' in port:
+                        host_port = port.split(':')[0]
+                        if host_port == '*':
+                            issues.append({
+                                'severity': 'High',
+                                'title': f'Port exposed to all interfaces in {service_name}',
+                                'description': f'Port {port} is exposed to all network interfaces.',
+                                'recommendation': 'Bind ports to specific IP addresses or use internal networks.'
+                            })
+            
+            # Check for environment variables
+            if 'environment' in service_config:
+                for env in service_config['environment']:
+                    if isinstance(env, str) and '=' in env:
+                        key, value = env.split('=', 1)
+                        if any(secret in key.lower() for secret in ['password', 'secret', 'key', 'token']):
+                            issues.append({
+                                'severity': 'Critical',
+                                'title': f'Sensitive environment variable in {service_name}',
+                                'description': f'Environment variable {key} may contain sensitive information.',
+                                'recommendation': 'Use Docker secrets or environment files for sensitive data.'
+                            })
+            
+            # Check for volume mounts
+            if 'volumes' in service_config:
+                for volume in service_config['volumes']:
+                    if isinstance(volume, str) and ':' in volume:
+                        host_path = volume.split(':')[0]
+                        if host_path == '/':
+                            issues.append({
+                                'severity': 'Critical',
+                                'title': f'Root directory mounted in {service_name}',
+                                'description': 'The container has access to the entire host filesystem.',
+                                'recommendation': 'Mount only necessary directories with appropriate permissions.'
+                            })
+    
+    # Generate recommendations
+    recommendations.extend([
+        {
+            'title': 'Use Docker secrets for sensitive data',
+            'description': 'Store sensitive information like passwords and API keys in Docker secrets instead of environment variables.'
+        },
+        {
+            'title': 'Implement resource limits',
+            'description': 'Add resource limits (CPU, memory) to prevent container resource exhaustion.'
+        },
+        {
+            'title': 'Use health checks',
+            'description': 'Implement health checks to ensure container availability and proper functioning.'
+        }
+    ])
+    
+    # Count issues by severity
+    severity_counts = {
+        'critical_count': sum(1 for issue in issues if issue['severity'] == 'Critical'),
+        'high_count': sum(1 for issue in issues if issue['severity'] == 'High'),
+        'medium_count': sum(1 for issue in issues if issue['severity'] == 'Medium'),
+        'low_count': sum(1 for issue in issues if issue['severity'] == 'Low')
+    }
+    
+    return {
+        'issues': issues,
+        'recommendations': recommendations,
+        **severity_counts
+    }
 
 if __name__ == '__main__':
 

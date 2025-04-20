@@ -11,4 +11,4 @@ class Config:
     SECRET_KEY = str(uuid.uuid4())
 
 class Variables:
-    HOST = "10.139.9.20"
+    HOST = "192.168.31.12"
